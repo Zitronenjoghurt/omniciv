@@ -1,0 +1,9 @@
+[package]
+name = "omniciv-game"
+description = "The interface bringing logic and content of the OmniCIV game together."
+version = "0.1.0"
+edition.workspace = true
+
+[dependencies]
+omniciv-core = { workspace = true }
+omniciv-data = { workspace = true }

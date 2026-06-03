@@ -1,0 +1,12 @@
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+
+[workspace.package]
+edition = "2024"
+
+[workspace.dependencies]
+omniciv-core = { path = "crates/core" }
+omniciv-data = { path = "crates/data" }
+omniciv-game = { path = "crates/game" }
+thiserror = "2.0.18"
