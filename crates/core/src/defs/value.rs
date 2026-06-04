@@ -5,7 +5,6 @@ use crate::content::resolve::Resolve;
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub enum RawValue {
     Const(f64),
-    PerCount { factor: f64 },
     Product(Box<RawValue>, Box<RawValue>),
     Sum(Box<RawValue>, Box<RawValue>),
 }
@@ -13,12 +12,6 @@ pub enum RawValue {
 impl RawValue {
     pub fn constant(v: impl Into<f64>) -> Self {
         Self::Const(v.into())
-    }
-
-    pub fn per_count(factor: impl Into<f64>) -> Self {
-        Self::PerCount {
-            factor: factor.into(),
-        }
     }
 
     pub fn product(a: impl Into<RawValue>, b: impl Into<RawValue>) -> Self {
@@ -33,7 +26,6 @@ impl RawValue {
 #[derive(Debug)]
 pub enum Value {
     Const(f64),
-    PerCount { factor: f64 },
     Product(Box<Value>, Box<Value>),
     Sum(Box<Value>, Box<Value>),
 }
@@ -44,7 +36,6 @@ impl Resolve for RawValue {
     fn resolve(self, _reg: &Registry) -> ContentResult<Self::Output> {
         let value = match self {
             RawValue::Const(v) => Value::Const(v),
-            RawValue::PerCount { factor } => Value::PerCount { factor },
             RawValue::Product(a, b) => Value::Product(a.resolve(_reg)?, b.resolve(_reg)?),
             RawValue::Sum(a, b) => Value::Sum(a.resolve(_reg)?, b.resolve(_reg)?),
         };

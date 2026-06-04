@@ -3,7 +3,7 @@ use omniciv_core::content::prelude::*;
 
 pub fn build(c: &mut ContentBuilder) -> ContentResult<()> {
     building!(c, "hut",
-        .effects([
+        .passives([
             produce("wood", 1.0)
         ])
     );

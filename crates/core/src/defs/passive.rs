@@ -6,14 +6,14 @@ use crate::defs::resource::ResourceDef;
 use crate::defs::value::{RawValue, Value};
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
-pub enum RawEffect {
+pub enum RawPassive {
     Produce {
         resource: Ref<ResourceDef>,
         rate: RawValue,
     },
 }
 
-impl RawEffect {
+impl RawPassive {
     pub fn produce(resource: impl Into<Ref<ResourceDef>>, rate: impl Into<RawValue>) -> Self {
         Self::Produce {
             resource: resource.into(),
@@ -23,23 +23,23 @@ impl RawEffect {
 }
 
 #[derive(Debug)]
-pub enum Effect {
+pub enum Passive {
     Produce {
         resource: Key<ResourceDef>,
         rate: Value,
     },
 }
 
-impl Resolve for RawEffect {
-    type Output = Effect;
+impl Resolve for RawPassive {
+    type Output = Passive;
 
     fn resolve(self, reg: &Registry) -> ContentResult<Self::Output> {
-        let effect = match self {
-            Self::Produce { resource, rate } => Effect::Produce {
+        let passive = match self {
+            Self::Produce { resource, rate } => Passive::Produce {
                 resource: resource.resolve(reg)?,
                 rate: rate.resolve(reg)?,
             },
         };
-        Ok(effect)
+        Ok(passive)
     }
 }

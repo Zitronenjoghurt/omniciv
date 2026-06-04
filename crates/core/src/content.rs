@@ -25,15 +25,11 @@ pub mod prelude {
     pub use super::error::*;
     pub use super::Content;
     use crate::content::resolve::Ref;
-    use crate::defs::effect::RawEffect;
+    use crate::defs::passive::RawPassive;
     use crate::defs::resource::ResourceDef;
     use crate::defs::value::RawValue;
 
-    pub fn produce(resource: impl Into<Ref<ResourceDef>>, rate: impl Into<RawValue>) -> RawEffect {
-        RawEffect::produce(resource, rate)
-    }
-
-    pub fn per_count(factor: impl Into<f64>) -> RawValue {
-        RawValue::per_count(factor)
+    pub fn produce(resource: impl Into<Ref<ResourceDef>>, rate: impl Into<RawValue>) -> RawPassive {
+        RawPassive::produce(resource, rate)
     }
 }

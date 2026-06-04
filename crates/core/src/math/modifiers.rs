@@ -50,4 +50,8 @@ impl Modifiers {
     pub fn apply(&self, value: f64) -> f64 {
         ((value + self.additive) * (self.multiplicative)).powf(self.exponential)
     }
+
+    pub fn value(&self) -> f64 {
+        self.apply(0.0)
+    }
 }
