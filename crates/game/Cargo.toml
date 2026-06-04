@@ -7,3 +7,4 @@ edition.workspace = true
 [dependencies]
 omniciv-core = { workspace = true }
 omniciv-data = { workspace = true }
+thiserror = { workspace = true }

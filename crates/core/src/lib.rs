@@ -1,4 +1,6 @@
 pub mod content;
 pub mod defs;
-mod engine;
-mod state;
+pub mod engine;
+mod math;
+pub mod state;
+pub mod view;

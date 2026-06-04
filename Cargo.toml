@@ -9,4 +9,5 @@ edition = "2024"
 omniciv-core = { path = "crates/core" }
 omniciv-data = { path = "crates/data" }
 omniciv-game = { path = "crates/game" }
+serde = { version = "1.0.228", features = ["derive"] }
 thiserror = "2.0.18"

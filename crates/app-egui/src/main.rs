@@ -1,5 +1,4 @@
-use omniciv_game::initialize;
-
 fn main() {
-    initialize();
+    let game = omniciv_game::Game::initialize().unwrap();
+    println!("{game:#?}");
 }

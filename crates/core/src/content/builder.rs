@@ -1,12 +1,41 @@
 use crate::content::error::ContentResult;
-use crate::content::registry::{Registry, Resolvable};
-use crate::content::Content;
-use std::any::{Any, TypeId};
-use std::collections::HashMap;
+use crate::content::registry::{Registered, Registry};
+use crate::content::resolve::Resolve;
+use crate::content::{for_each_content_type, Content};
 
-#[derive(Debug, Default)]
-pub struct ContentBuilder {
-    staged: HashMap<TypeId, Box<dyn Any>>,
+macro_rules! define_content_builder {
+    ($($field:ident : $data:ty => $def:ty),* $(,)?) => {
+        #[derive(Debug, Default, serde::Serialize, serde::Deserialize)]
+        pub struct ContentBuilder {
+            $( #[serde(default)] $field: Vec<(String, $data)>, )*
+        }
+
+        $(
+            impl Staged for $data {
+                fn bucket_mut(b: &mut ContentBuilder) -> &mut Vec<(String, Self)> {
+                    &mut b.$field
+                }
+            }
+        )*
+
+        impl ContentBuilder {
+            pub fn build(self) -> ContentResult<Content> {
+                let mut reg = Registry::new();
+                $( declare_bucket(&self.$field, &mut reg)?; )*
+                $( resolve_bucket(self.$field, &mut reg)?; )*
+                Ok(Content { registry: reg })
+            }
+
+            pub fn merge(&mut self, mut other: ContentBuilder) {
+                $( self.$field.append(&mut other.$field); )*
+            }
+        }
+    };
+}
+for_each_content_type!(define_content_builder);
+
+pub trait Staged: Sized {
+    fn bucket_mut(b: &mut ContentBuilder) -> &mut Vec<(String, Self)>;
 }
 
 impl ContentBuilder {
@@ -14,43 +43,44 @@ impl ContentBuilder {
         Self::default()
     }
 
-    pub fn build(mut self) -> ContentResult<Content> {
-        let mut reg = Registry::new();
-
-        self.process_type::<crate::defs::era::EraData>(&mut reg)?;
-        self.process_type::<crate::defs::resource::ResourceData>(&mut reg)?;
-
-        debug_assert!(
-            self.staged.is_empty(),
-            "Some registered content was never processed, you probably forgot a process_type call"
-        );
-
-        Ok(Content { registry: reg })
+    pub fn add<R: Staged>(&mut self, id: impl AsRef<str>, raw: R) {
+        R::bucket_mut(self).push((id.as_ref().to_owned(), raw));
     }
+}
 
-    pub fn add<R: Resolvable + 'static>(&mut self, id: impl AsRef<str>, raw: R) {
-        let type_id = TypeId::of::<R>();
-
-        let bucket = self
-            .staged
-            .entry(type_id)
-            .or_insert_with(|| Box::new(Vec::<(String, R)>::new()))
-            .downcast_mut::<Vec<(String, R)>>()
-            .unwrap();
-
-        bucket.push((id.as_ref().to_owned(), raw));
+fn declare_bucket<R: Resolve>(bucket: &[(String, R)], reg: &mut Registry) -> ContentResult<()>
+where
+    R::Output: Registered,
+{
+    for (id, _) in bucket {
+        reg.declare::<R::Output>(id)?;
     }
+    Ok(())
+}
 
-    fn process_type<R: Resolvable + 'static>(&mut self, reg: &mut Registry) -> ContentResult<()> {
-        if let Some(boxed_bucket) = self.staged.remove(&TypeId::of::<R>()) {
-            let bucket = *boxed_bucket.downcast::<Vec<(String, R)>>().unwrap();
-
-            for (id, raw) in bucket {
-                reg.add_raw(id, raw)?;
-            }
-        }
-        Ok(())
+fn resolve_bucket<R: Resolve>(bucket: Vec<(String, R)>, reg: &mut Registry) -> ContentResult<()>
+where
+    R::Output: Registered,
+{
+    for (id, raw) in bucket {
+        let key = reg
+            .key::<R::Output>(&id)
+            .expect("every id was declared in pass 1");
+        let def = raw.resolve(reg)?;
+        reg.insert(key, def);
     }
+    debug_assert!(
+        reg.pending_empty::<R::Output>(),
+        "a declared id of this type was never filled, declare/resolve are out of sync",
+    );
+    Ok(())
+}
+
+#[macro_export]
+macro_rules! building {
+    ($content:expr, $id:expr, $($chain:tt)*) => {
+        $content.add($id, $crate::defs::building::BuildingData::builder()$($chain)*.build())
+    };
 }
 
 #[macro_export]

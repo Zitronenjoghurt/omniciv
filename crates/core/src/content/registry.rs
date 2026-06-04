@@ -1,34 +1,53 @@
 use crate::content::error::{ContentError, ContentResult};
+use crate::content::for_each_content_type;
 use crate::content::store::{Key, Store};
-use crate::defs::*;
 use string_interner::DefaultStringInterner;
 
-#[derive(Debug, Default)]
-pub struct Registry {
-    interner: DefaultStringInterner,
-    eras: Store<era::EraDef>,
-    resources: Store<resource::ResourceDef>,
+macro_rules! define_registry {
+    ($($field:ident : $data:ty => $def:ty),* $(,)?) => {
+        #[derive(Debug, Default)]
+        pub struct Registry {
+            interner: DefaultStringInterner,
+            $( $field: Store<$def>, )*
+        }
+
+        $(
+            impl Registered for $def {
+                fn store(registry: &Registry) -> &Store<Self> { &registry.$field }
+                fn store_mut(registry: &mut Registry) -> &mut Store<Self> { &mut registry.$field }
+            }
+        )*
+    };
 }
+for_each_content_type!(define_registry);
 
 impl Registry {
     pub fn new() -> Self {
         Self::default()
     }
 
-    pub fn add<T: Registered>(&mut self, id: impl AsRef<str>, value: T) -> Key<T> {
+    pub fn declare<T: Registered>(&mut self, id: impl AsRef<str>) -> ContentResult<Key<T>> {
         let key = Key::new(self.interner.get_or_intern(id.as_ref()));
-        T::store_mut(self).insert(key, value);
-        key
+        if !T::store_mut(self).declare(key) {
+            return Err(ContentError::DuplicateId {
+                type_name: std::any::type_name::<T>(),
+                id: id.as_ref().to_owned(),
+            });
+        }
+        Ok(key)
     }
 
-    pub fn add_raw<R: Resolvable>(
-        &mut self,
-        id: impl AsRef<str>,
-        unresolved: R,
-    ) -> ContentResult<Key<R::Output>> {
-        let key = Key::new(self.interner.get_or_intern(id.as_ref()));
-        let resolved = unresolved.resolve(key, self)?;
-        self.add(id, resolved);
+    pub fn key<T: Registered>(&self, id: &str) -> Option<Key<T>> {
+        self.interner.get(id).map(Key::new)
+    }
+
+    pub fn insert<T: Registered>(&mut self, key: Key<T>, value: T) {
+        T::store_mut(self).insert(key, value);
+    }
+
+    pub fn add<T: Registered>(&mut self, id: impl AsRef<str>, value: T) -> ContentResult<Key<T>> {
+        let key = self.declare::<T>(&id)?;
+        self.insert(key, value);
         Ok(key)
     }
 
@@ -46,7 +65,7 @@ impl Registry {
             })?;
 
         let key = Key::new(symbol);
-        if T::store(self).contains(key) {
+        if T::store(self).is_known(key) {
             Ok(key)
         } else {
             Err(ContentError::NotFound {
@@ -55,28 +74,14 @@ impl Registry {
             })
         }
     }
+
+    #[cfg(debug_assertions)]
+    pub fn pending_empty<T: Registered>(&self) -> bool {
+        T::store(self).pending_is_empty()
+    }
 }
 
 pub trait Registered: Sized {
     fn store(registry: &Registry) -> &Store<Self>;
     fn store_mut(registry: &mut Registry) -> &mut Store<Self>;
-}
-
-macro_rules! impl_registered {
-    ($($ty:ty => $field:ident),* $(,)?) => { $(
-        impl Registered for $ty {
-            fn store(registry: &Registry) -> &Store<Self> { &registry.$field }
-            fn store_mut(registry: &mut Registry) -> &mut Store<Self> { &mut registry.$field }
-        }
-    )* };
-}
-
-impl_registered! {
-    era::EraDef => eras,
-    resource::ResourceDef => resources
-}
-
-pub trait Resolvable {
-    type Output: Registered;
-    fn resolve(self, key: Key<Self::Output>, registry: &Registry) -> ContentResult<Self::Output>;
 }

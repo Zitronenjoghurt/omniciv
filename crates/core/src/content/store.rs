@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 use std::marker::PhantomData;
 use string_interner::DefaultSymbol;
@@ -49,30 +49,44 @@ impl<T> Copy for Key<T> {}
 
 #[derive(Debug)]
 pub struct Store<T> {
+    declared: HashSet<Key<T>>,
     entries: HashMap<Key<T>, T>,
 }
 
 impl<T> Default for Store<T> {
     fn default() -> Self {
         Self {
+            declared: HashSet::new(),
             entries: HashMap::new(),
         }
     }
 }
 
 impl<T> Store<T> {
-    pub(crate) fn new() -> Self {
-        Self::default()
+    pub(crate) fn declare(&mut self, key: Key<T>) -> bool {
+        if self.entries.contains_key(&key) {
+            return false;
+        }
+        self.declared.insert(key)
+    }
+
+    pub(crate) fn is_known(&self, key: Key<T>) -> bool {
+        self.declared.contains(&key) || self.entries.contains_key(&key)
     }
 
     pub(crate) fn insert(&mut self, key: Key<T>, value: T) {
+        self.declared.remove(&key);
         self.entries.insert(key, value);
     }
 
+    pub(crate) fn pending_is_empty(&self) -> bool {
+        self.declared.is_empty()
+    }
+
     pub fn get(&self, key: Key<T>) -> &T {
-        self.entries.get(&key).expect(
-            "dangling key, this is a bug as long as data associated to a key cannot be removed",
-        )
+        self.entries
+            .get(&key)
+            .expect("dangling key, bug in build pipeline")
     }
 
     pub fn contains(&self, key: Key<T>) -> bool {
