@@ -23,7 +23,7 @@ macro_rules! define_content_builder {
                 let mut reg = Registry::new();
                 $( declare_bucket(&self.$field, &mut reg)?; )*
                 $( resolve_bucket(self.$field, &mut reg)?; )*
-                Ok(Content { registry: reg })
+                Ok(Content { reg })
             }
 
             pub fn merge(&mut self, mut other: ContentBuilder) {

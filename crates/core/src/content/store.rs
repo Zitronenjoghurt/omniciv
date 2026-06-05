@@ -83,13 +83,13 @@ impl<T> Store<T> {
         self.declared.is_empty()
     }
 
-    pub fn get(&self, key: Key<T>) -> &T {
+    pub fn get(&self, key: &Key<T>) -> &T {
         self.entries
-            .get(&key)
+            .get(key)
             .expect("dangling key, bug in build pipeline")
     }
 
-    pub fn contains(&self, key: Key<T>) -> bool {
-        self.entries.contains_key(&key)
+    pub fn contains(&self, key: &Key<T>) -> bool {
+        self.entries.contains_key(key)
     }
 }

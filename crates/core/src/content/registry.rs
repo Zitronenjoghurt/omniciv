@@ -51,7 +51,7 @@ impl Registry {
         Ok(key)
     }
 
-    pub fn get<T: Registered>(&self, key: Key<T>) -> &T {
+    pub fn get<T: Registered>(&self, key: &Key<T>) -> &T {
         T::store(self).get(key)
     }
 

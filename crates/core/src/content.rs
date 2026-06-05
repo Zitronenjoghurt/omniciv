@@ -6,7 +6,7 @@ pub mod store;
 
 #[derive(Debug)]
 pub struct Content {
-    registry: registry::Registry,
+    pub reg: registry::Registry,
 }
 
 macro_rules! for_each_content_type {
@@ -14,7 +14,9 @@ macro_rules! for_each_content_type {
         $m! {
             buildings: $crate::defs::building::BuildingData => $crate::defs::building::BuildingDef,
             eras:      $crate::defs::era::EraData          => $crate::defs::era::EraDef,
+            flags:     $crate::defs::flag::FlagData        => $crate::defs::flag::FlagDef,
             resources: $crate::defs::resource::ResourceData => $crate::defs::resource::ResourceDef,
+            tracks:    $crate::defs::track::TrackData      => $crate::defs::track::TrackDef,
         }
     };
 }
