@@ -1,7 +1,9 @@
 use crate::engine::event::Event;
 use crate::types::building::Building;
+use crate::types::human::Human;
 use crate::types::milestone::Milestone;
 use crate::types::resource::Resource;
+use crate::types::technology::Technology;
 use std::ops::BitOr;
 
 pub enum Action {
@@ -9,9 +11,12 @@ pub enum Action {
     TriggerEvent(Event),
     AddBuilding(Building, u128),
     GainResource(Resource, f64),
+    ResearchTechnology(Technology),
     SpendResource(Resource, f64),
     UnlockBuilding(Building),
+    UnlockHuman(Human),
     UnlockMilestone(Milestone),
+    UnlockTechnology(Technology),
 }
 
 impl Action {
@@ -21,9 +26,12 @@ impl Action {
             Self::TriggerEvent(event) => state.events.push(event),
             Self::AddBuilding(building, count) => state.buildings.add(building, count),
             Self::GainResource(resource, amount) => state.resources.add(resource, amount),
+            Self::ResearchTechnology(technology) => state.technologies.set(technology, true),
             Self::SpendResource(resource, amount) => state.resources.sub(resource, amount),
             Self::UnlockBuilding(building) => state.building_unlocks.set(building, true),
+            Self::UnlockHuman(human) => state.human_unlocks.set(human, true),
             Self::UnlockMilestone(milestone) => state.milestones.set(milestone, true),
+            Self::UnlockTechnology(technology) => state.technology_unlocks.set(technology, true),
         }
     }
 }

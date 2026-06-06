@@ -4,8 +4,10 @@ use crate::state::amount_map::AmountMap;
 use crate::state::count_map::CountMap;
 use crate::state::flag_map::FlagMap;
 use crate::types::building::Building;
+use crate::types::human::Human;
 use crate::types::milestone::Milestone;
 use crate::types::resource::Resource;
+use crate::types::technology::Technology;
 
 mod amount_map;
 mod count_map;
@@ -15,8 +17,12 @@ mod flag_map;
 pub struct State {
     pub(crate) buildings: CountMap<Building>,
     pub(crate) building_unlocks: FlagMap<Building>,
+    pub(crate) humans: CountMap<Human>,
+    pub(crate) human_unlocks: FlagMap<Human>,
     pub(crate) milestones: FlagMap<Milestone>,
     pub(crate) resources: AmountMap<Resource>,
+    pub(crate) technologies: FlagMap<Technology>,
+    pub(crate) technology_unlocks: FlagMap<Technology>,
     #[serde(skip, default)]
     pub(crate) events: Vec<Event>,
     #[serde(skip, default)]

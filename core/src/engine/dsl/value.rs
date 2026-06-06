@@ -3,6 +3,7 @@ use crate::engine::dsl::condition::Condition;
 use crate::engine::dsl::constant::Constant;
 use crate::state::State;
 use crate::types::building::Building;
+use crate::types::human::Human;
 use crate::types::resource::Resource;
 use crate::types::stat::Stat;
 use std::fmt::Display;
@@ -11,9 +12,14 @@ pub enum Value {
     Constant(Constant),
     BuildingCount(Building),
     BuildingsUnlocked,
+    HumanCount(Human),
+    HumansUnlocked,
     MilestonesUnlocked,
     ResourceAmount(Resource),
     ResourceGatherAmount(Resource),
+    Stat(Stat),
+    TechnologiesResearched,
+    TechnologiesUnlocked,
 }
 
 impl Value {
@@ -22,10 +28,17 @@ impl Value {
             Self::Constant(constant) => *constant,
             Self::BuildingCount(building) => Constant::Count(state.buildings.get(building)),
             Self::BuildingsUnlocked => Constant::Count(state.building_unlocks.count_set() as u128),
+            Self::HumanCount(human) => Constant::Count(state.humans.get(human)),
+            Self::HumansUnlocked => Constant::Count(state.human_unlocks.count_set() as u128),
             Self::MilestonesUnlocked => Constant::Count(state.milestones.count_set() as u128),
             Self::ResourceAmount(resource) => Constant::Amount(state.resources.get(resource)),
             Self::ResourceGatherAmount(resource) => {
                 Constant::Amount(state.stats.get(Stat::ResourceGather(*resource)))
+            }
+            Self::Stat(stat) => state.stats.get(*stat).into(),
+            Self::TechnologiesResearched => Constant::Count(state.technologies.count_set() as u128),
+            Self::TechnologiesUnlocked => {
+                Constant::Count(state.technology_unlocks.count_set() as u128)
             }
         }
     }
@@ -87,11 +100,16 @@ impl Display for Value {
             Self::Constant(constant) => write!(f, "{constant}"),
             Self::BuildingCount(building) => write!(f, "number of building '{building}'"),
             Self::BuildingsUnlocked => write!(f, "number of buildings unlocked"),
+            Self::HumanCount(human) => write!(f, "number of human role '{human}'"),
+            Self::HumansUnlocked => write!(f, "number of humans unlocked"),
             Self::MilestonesUnlocked => write!(f, "number of milestones unlocked"),
             Self::ResourceAmount(resource) => write!(f, "amount of resource '{resource}'"),
             Self::ResourceGatherAmount(resource) => {
                 write!(f, "gatherable amount of resource '{resource}'")
             }
+            Self::Stat(stat) => write!(f, "'{stat}'"),
+            Self::TechnologiesResearched => write!(f, "number of technologies researched"),
+            Self::TechnologiesUnlocked => write!(f, "number of technologies unlocked"),
         }
     }
 }

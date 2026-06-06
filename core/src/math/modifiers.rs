@@ -1,6 +1,7 @@
 #[derive(Debug, Copy, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum ModifierKind {
     Add,
+    Sub,
     Mul,
     Exp,
 }
@@ -27,9 +28,18 @@ impl Modifiers {
         Self::default()
     }
 
+    pub fn from_value(value: f64) -> Self {
+        Self {
+            additive: value,
+            multiplicative: 1.0,
+            exponential: 1.0,
+        }
+    }
+
     pub fn insert(&mut self, kind: ModifierKind, value: f64) {
         match kind {
             ModifierKind::Add => self.add(value),
+            ModifierKind::Sub => self.add(-value),
             ModifierKind::Mul => self.mul(value),
             ModifierKind::Exp => self.exp(value),
         }
@@ -37,6 +47,10 @@ impl Modifiers {
 
     pub fn add(&mut self, value: f64) {
         self.additive += value;
+    }
+
+    pub fn sub(&mut self, value: f64) {
+        self.additive -= value;
     }
 
     pub fn mul(&mut self, value: f64) {

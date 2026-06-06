@@ -3,7 +3,9 @@ use crate::engine::dsl::value::Value;
 use crate::fmt::fmt_join;
 use crate::state::State;
 use crate::types::building::Building;
+use crate::types::human::Human;
 use crate::types::milestone::Milestone;
+use crate::types::technology::Technology;
 use std::fmt::Display;
 use std::ops::{BitAnd, BitOr, Not};
 
@@ -11,7 +13,10 @@ pub enum Condition {
     Always,
     Never,
     BuildingUnlocked(Building),
+    HumanUnlocked(Human),
     MilestoneUnlocked(Milestone),
+    TechnologyResearched(Technology),
+    TechnologyUnlocked(Technology),
     Compare(Value, CompOp, Value),
     All(Vec<Condition>),
     Any(Vec<Condition>),
@@ -24,7 +29,10 @@ impl Condition {
             Self::Always => true,
             Self::Never => false,
             Self::BuildingUnlocked(building) => state.building_unlocks.get(building),
+            Self::HumanUnlocked(human) => state.human_unlocks.get(human),
             Self::MilestoneUnlocked(milestone) => state.milestones.get(milestone),
+            Self::TechnologyResearched(technology) => state.technologies.get(technology),
+            Self::TechnologyUnlocked(technology) => state.technology_unlocks.get(technology),
             Self::Compare(lhs, op, rhs) => {
                 let lhs = lhs.resolve(state);
                 let rhs = rhs.resolve(state);
@@ -83,7 +91,12 @@ impl Display for Condition {
             Self::Always => write!(f, "always"),
             Self::Never => write!(f, "never"),
             Self::BuildingUnlocked(building) => write!(f, "unlocked building '{building}'"),
+            Self::HumanUnlocked(human) => write!(f, "unlocked human '{human}'"),
             Self::MilestoneUnlocked(milestone) => write!(f, "unlocked milestone '{milestone}'"),
+            Self::TechnologyResearched(technology) => {
+                write!(f, "researched technology '{technology}'")
+            }
+            Self::TechnologyUnlocked(technology) => write!(f, "unlocked technology '{technology}'"),
             Self::Compare(lhs, op, rhs) => write!(f, "{lhs} {op} {rhs}"),
             Self::All(conditions) => fmt_join(f, " and ", conditions),
             Self::Any(conditions) => fmt_join(f, " or ", conditions),

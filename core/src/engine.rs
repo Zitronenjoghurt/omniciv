@@ -8,6 +8,7 @@ use crate::state::State;
 use crate::types::building::Building;
 use crate::Resource;
 
+pub mod capabilities;
 pub mod command;
 pub mod dsl;
 pub mod error;

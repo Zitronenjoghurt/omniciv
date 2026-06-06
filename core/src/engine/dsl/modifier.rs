@@ -11,6 +11,7 @@ macro_rules! modifiers {
         M
     }};
     (@m $stat:expr, +, $v:expr) => { $crate::engine::dsl::modifier::Modifier { stat: $stat, kind: $crate::math::modifiers::ModifierKind::Add, value: $v } };
+    (@m $stat:expr, -, $v:expr) => { $crate::engine::dsl::modifier::Modifier { stat: $stat, kind: $crate::math::modifiers::ModifierKind::Sub, value: $v } };
     (@m $stat:expr, *, $v:expr) => { $crate::engine::dsl::modifier::Modifier { stat: $stat, kind: $crate::math::modifiers::ModifierKind::Mul, value: $v } };
     (@m $stat:expr, ^, $v:expr) => { $crate::engine::dsl::modifier::Modifier { stat: $stat, kind: $crate::math::modifiers::ModifierKind::Exp, value: $v } };
 }
@@ -26,6 +27,14 @@ impl Modifier {
         Self {
             stat,
             kind: ModifierKind::Add,
+            value,
+        }
+    }
+
+    pub const fn sub(stat: Stat, value: Value) -> Self {
+        Self {
+            stat,
+            kind: ModifierKind::Sub,
             value,
         }
     }

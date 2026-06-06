@@ -4,57 +4,58 @@ use crate::engine::capabilities::modifying::Modifying;
 use crate::engine::capabilities::type_count::TypeCount;
 use crate::engine::capabilities::type_iter::TypeIter;
 use crate::engine::dsl::action::Action;
-use crate::engine::dsl::comp::CompOp;
 use crate::engine::dsl::condition::Condition;
-use crate::engine::dsl::constant::Constant;
 use crate::engine::dsl::modifier::Modifier;
 use crate::engine::dsl::value::Value;
 use crate::engine::event::Event;
-use crate::types::resource::Resource;
 use crate::types::stat::Stat;
-use crate::types::technology::Technology;
+use crate::{modifiers, Resource};
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 use strum::{EnumCount, EnumIter, IntoEnumIterator};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, EnumIter, EnumCount)]
-pub enum Building {
-    Bonfire = 0,
+pub enum Human {
+    Gatherer = 0,
+    Thinker = 1,
 }
 
-impl TypeCount for Building {
+impl TypeCount for Human {
     fn count() -> usize {
         Self::COUNT
     }
 }
 
-impl TypeIter for Building {
+impl TypeIter for Human {
     fn iter_all() -> impl Iterator<Item = Self> {
         Self::iter()
     }
 }
 
-impl AutoUnlockable for Building {
+impl AutoUnlockable for Human {
     fn unlock_count() -> Value {
-        Value::BuildingsUnlocked
+        Value::HumansUnlocked
     }
 
     fn is_unlocked(&self) -> Condition {
-        Condition::BuildingUnlocked(*self)
+        Condition::HumanUnlocked(*self)
     }
 
     fn can_unlock(&self) -> Condition {
         match self {
-            Self::Bonfire => Condition::TechnologyResearched(Technology::Fire),
+            Self::Gatherer => Condition::Always,
+            Self::Thinker => {
+                Value::Stat(Stat::ResourceProduction(Resource::Berries)).at_least(20.0)
+            }
         }
     }
 
     fn unlock_action(&self) -> Action {
-        Action::UnlockBuilding(*self)
+        Action::UnlockHuman(*self)
     }
 
     fn unlock_event(&self) -> Event {
-        Event::UnlockedBuilding(*self)
+        Event::UnlockedHuman(*self)
     }
 
     fn on_unlock(&self) -> Option<Action> {
@@ -62,61 +63,44 @@ impl AutoUnlockable for Building {
     }
 }
 
-impl Modifying for Building {
+impl Modifying for Human {
     fn modifying_active(&self) -> Condition {
         self.is_unlocked()
     }
 
     fn modifying_scale(&self) -> Value {
-        Value::BuildingCount(*self)
+        Value::HumanCount(*self)
     }
 
     fn modifiers(&self) -> &'static [Modifier] {
         match self {
-            Self::Bonfire => todo!(),
+            Self::Gatherer => modifiers!(
+                Stat::ResourceProduction(Resource::Berries) => +Value::amount(2.5);
+                Stat::ResourceConsumption(Resource::Berries) => +Value::amount(2.0)
+            ),
+            Self::Thinker => modifiers!(
+                Stat::ResourceProduction(Resource::Ideas) => +Value::amount(0.01);
+                Stat::ResourceConsumption(Resource::Berries) => +Value::amount(2.0)
+            ),
         }
     }
 }
 
-impl IndividualCount for Building {
+impl IndividualCount for Human {
     fn total_count_stat() -> Stat {
-        Stat::TotalBuildings
+        Stat::TotalHumans
     }
 
     fn individual_count(&self) -> Value {
-        Value::BuildingCount(*self)
+        Value::HumanCount(*self)
     }
 }
 
-impl Building {
-    pub fn build_cost(&self) -> &'static [(Resource, f64)] {
-        match self {
-            Self::Bonfire => &[],
-        }
-    }
-}
-
-impl Building {
-    pub fn affordable(&self, count: u128) -> Condition {
-        Condition::All(
-            self.build_cost()
-                .iter()
-                .map(|&(resource, amount)| {
-                    Condition::Compare(
-                        Value::ResourceAmount(resource),
-                        CompOp::Gte,
-                        Value::Constant(Constant::Amount(amount * count as f64)),
-                    )
-                })
-                .collect(),
-        )
-    }
-}
-
-impl Display for Building {
+impl Display for Human {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Bonfire => write!(f, "Bonfire"),
+            Self::Gatherer => write!(f, "Gatherer"),
+            Self::Thinker => write!(f, "Thinker"),
         }
     }
 }

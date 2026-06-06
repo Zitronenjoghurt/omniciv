@@ -1,12 +1,11 @@
+use crate::engine::capabilities::auto_unlockable::AutoUnlockable;
 use crate::engine::dsl::action::Action;
-use crate::engine::dsl::condition::Condition;
-use crate::engine::dsl::value::Value;
 use crate::engine::dsl::{Mutate, Query};
-use crate::engine::event::Event;
 use crate::state::State;
 use crate::types::building::Building;
+use crate::types::human::Human;
 use crate::types::milestone::Milestone;
-use strum::{EnumCount, IntoEnumIterator};
+use crate::types::technology::Technology;
 
 pub struct TickCtx<'a> {
     state: &'a mut State,
@@ -19,42 +18,27 @@ impl<'a> TickCtx<'a> {
     }
 
     pub fn tick(&mut self) {
-        self.milestone_unlocks();
-        self.building_unlocks();
+        self.check_new_unlocks::<Building>();
+        self.check_new_unlocks::<Human>();
+        self.check_new_unlocks::<Milestone>();
+        self.check_new_unlocks::<Technology>();
 
         self.state.refresh_stats();
     }
 
-    fn milestone_unlocks(&mut self) {
-        if self.eval(Value::MilestonesUnlocked) == Milestone::COUNT.into() {
+    fn check_new_unlocks<U: AutoUnlockable>(&mut self) {
+        if self.eval(U::unlock_count()) == U::count().into() {
             return;
         }
-        let unlocked: Vec<Milestone> = Milestone::iter()
-            .filter(|&m| {
-                !self.met(Condition::MilestoneUnlocked(m)) && self.met(m.unlock_condition())
-            })
+        let unlocked: Vec<U> = U::iter_all()
+            .filter(|u| !self.met(u.is_unlocked()) && self.met(u.can_unlock()))
             .collect();
-        for m in unlocked {
-            self.apply(Action::UnlockMilestone(m));
-            if let Some(on_unlock) = m.on_unlock() {
-                self.apply(on_unlock);
-            }
-            self.apply(Action::TriggerEvent(Event::UnlockedMilestone(m)));
-        }
-    }
-
-    fn building_unlocks(&mut self) {
-        if self.eval(Value::BuildingsUnlocked) == Building::COUNT.into() {
-            return;
-        }
-        let unlocked: Vec<Building> = Building::iter()
-            .filter(|&b| {
-                !self.met(Condition::BuildingUnlocked(b)) && self.met(b.unlock_condition())
-            })
-            .collect();
-        for b in unlocked {
-            self.apply(Action::UnlockBuilding(b));
-            self.apply(Action::TriggerEvent(Event::UnlockedBuilding(b)));
+        for item in unlocked {
+            self.apply(item.unlock_action());
+            if let Some(action) = item.on_unlock() {
+                self.apply(action);
+            };
+            self.apply(Action::TriggerEvent(item.unlock_event()));
         }
     }
 }

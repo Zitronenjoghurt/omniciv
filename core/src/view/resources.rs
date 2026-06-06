@@ -28,7 +28,7 @@ impl Assemble<Resource> for ResourceView {
 fn gather_form(kind: Resource, amount: f64) -> Form {
     Form {
         id: FormId::Gather(kind),
-        label: format!("Gather +{amount:.0}"),
+        label: format!("Gather +{amount:.2}"),
         enabled: true,
         fields: vec![],
         notes: vec![],
