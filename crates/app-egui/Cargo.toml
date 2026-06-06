@@ -1,8 +1,0 @@
-[package]
-name = "omniciv-app-egui"
-description = "The egui app of the OmniCIV game."
-version = "0.1.0"
-edition.workspace = true
-
-[dependencies]
-omniciv-game = { workspace = true }
