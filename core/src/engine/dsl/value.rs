@@ -8,6 +8,7 @@ use crate::types::resource::Resource;
 use crate::types::stat::Stat;
 use std::fmt::Display;
 
+#[derive(Debug, Copy, Clone)]
 pub enum Value {
     Constant(Constant),
     BuildingCount(Building),
@@ -19,6 +20,13 @@ pub enum Value {
     Stat(Stat),
     TechnologiesResearched,
     TechnologiesUnlocked,
+    Add(&'static Value, &'static Value),
+    Mul(&'static Value, &'static Value),
+    Scale {
+        base: &'static Value,
+        factor: f64,
+        exponent: &'static Value,
+    },
 }
 
 impl Value {
@@ -36,6 +44,19 @@ impl Value {
             Self::TechnologiesUnlocked => {
                 Constant::Count(state.technology_unlocks.count_set() as u128)
             }
+            Self::Add(a, b) => {
+                Constant::Amount(a.resolve(state).as_f64() + b.resolve(state).as_f64())
+            }
+            Self::Mul(a, b) => {
+                Constant::Amount(a.resolve(state).as_f64() * b.resolve(state).as_f64())
+            }
+            Self::Scale {
+                base,
+                factor,
+                exponent,
+            } => Constant::Amount(
+                base.resolve(state).as_f64() * factor.powf(exponent.resolve(state).as_f64()),
+            ),
         }
     }
 
@@ -103,6 +124,13 @@ impl Display for Value {
             Self::Stat(stat) => write!(f, "'{stat}'"),
             Self::TechnologiesResearched => write!(f, "number of technologies researched"),
             Self::TechnologiesUnlocked => write!(f, "number of technologies unlocked"),
+            Self::Add(a, b) => write!(f, "({a} + {b})"),
+            Self::Mul(a, b) => write!(f, "({a} * {b})"),
+            Self::Scale {
+                base,
+                factor,
+                exponent,
+            } => write!(f, "({base} * {factor}^{exponent})"),
         }
     }
 }

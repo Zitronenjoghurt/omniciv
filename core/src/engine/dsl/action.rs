@@ -10,6 +10,8 @@ pub enum Action {
     Chain(Vec<Action>),
     TriggerEvent(Event),
     AddBuilding(Building, u128),
+    AddHumans(Human, u128),
+    MoveHumans { from: Human, to: Human, count: u128 },
     GainResource(Resource, f64),
     ResearchTechnology(Technology),
     SpendResource(Resource, f64),
@@ -25,6 +27,11 @@ impl Action {
             Self::Chain(actions) => actions.into_iter().for_each(|action| action.apply(state)),
             Self::TriggerEvent(event) => state.events.push(event),
             Self::AddBuilding(building, count) => state.buildings.add(building, count),
+            Self::AddHumans(human, count) => state.humans.add(human, count),
+            Self::MoveHumans { from, to, count } => {
+                state.humans.sub(from, count);
+                state.humans.add(to, count);
+            }
             Self::GainResource(resource, amount) => state.resources.add(resource, amount),
             Self::ResearchTechnology(technology) => state.technologies.set(technology, true),
             Self::SpendResource(resource, amount) => state.resources.sub(resource, amount),

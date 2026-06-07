@@ -1,11 +1,16 @@
 use crate::engine::capabilities::auto_unlockable::AutoUnlockable;
 use crate::engine::dsl::action::Action;
+use crate::engine::dsl::value::Value;
 use crate::engine::dsl::{Mutate, Query};
+use crate::math::step_resource;
 use crate::state::State;
 use crate::types::building::Building;
 use crate::types::human::Human;
 use crate::types::milestone::Milestone;
+use crate::types::resource::Resource;
+use crate::types::stat::Stat;
 use crate::types::technology::Technology;
+use strum::IntoEnumIterator;
 
 pub struct TickCtx<'a> {
     state: &'a mut State,
@@ -24,6 +29,8 @@ impl<'a> TickCtx<'a> {
         self.check_new_unlocks::<Technology>();
 
         self.state.refresh_stats();
+
+        self.integrate_resources();
     }
 
     fn check_new_unlocks<U: AutoUnlockable>(&mut self) {
@@ -38,7 +45,28 @@ impl<'a> TickCtx<'a> {
             if let Some(action) = item.on_unlock() {
                 self.apply(action);
             };
-            self.apply(Action::TriggerEvent(item.unlock_event()));
+            if let Some(event) = item.unlock_event() {
+                self.apply(Action::TriggerEvent(event));
+            }
+        }
+    }
+}
+
+// Mutations
+impl<'a> TickCtx<'a> {
+    fn integrate_resources(&mut self) {
+        if self.dt <= 0.0 {
+            return;
+        }
+
+        for resource in Resource::iter() {
+            let net = self.eval(Value::Stat(Stat::ResourceNet(resource))).as_f64();
+            if net == 0.0 {
+                continue;
+            }
+            let current = self.eval(Value::ResourceAmount(resource)).as_f64();
+            let next = step_resource(net, current, self.dt, f64::INFINITY);
+            self.state.resources.set(resource, next);
         }
     }
 }

@@ -10,6 +10,6 @@ pub trait AutoUnlockable: TypeCount + TypeIter {
     fn is_unlocked(&self) -> Condition;
     fn can_unlock(&self) -> Condition;
     fn unlock_action(&self) -> Action;
-    fn unlock_event(&self) -> Event;
+    fn unlock_event(&self) -> Option<Event>;
     fn on_unlock(&self) -> Option<Action>;
 }

@@ -1,5 +1,8 @@
 use crate::ui::widgets::building::BuildingViewsWidget;
+use crate::ui::widgets::human::HumanViewsWidget;
 use crate::ui::widgets::resource::ResourceViewsWidget;
+use crate::ui::widgets::stats::StatsWidget;
+use crate::ui::widgets::technology::TechnologyViewsWidget;
 use eframe::{CreationContext, Frame};
 use egui::{CentralPanel, Context, FontDefinitions, Ui};
 use egui_notify::Toasts;
@@ -36,9 +39,20 @@ impl eframe::App for App {
             let view = self.game.view();
             let mut submits: Vec<Submit> = Vec::new();
 
-            ui.columns(2, |columns| {
+            ui.columns(5, |columns| {
                 submits.extend(ResourceViewsWidget::new(&view.resources).show(&mut columns[0]));
-                submits.extend(BuildingViewsWidget::new(&view.buildings).show(&mut columns[1]));
+                submits.extend(
+                    BuildingViewsWidget::new(&view.buildings, &view.locked_buildings)
+                        .show(&mut columns[1]),
+                );
+                submits.extend(
+                    HumanViewsWidget::new(&view.humans, &view.locked_humans).show(&mut columns[2]),
+                );
+                submits.extend(
+                    TechnologyViewsWidget::new(&view.technologies, &view.locked_technologies)
+                        .show(&mut columns[3]),
+                );
+                StatsWidget::new(&view.stats).show(&mut columns[4]);
             });
 
             for submit in submits {

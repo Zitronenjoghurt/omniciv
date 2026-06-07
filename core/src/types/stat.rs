@@ -4,6 +4,7 @@ use std::fmt::Display;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub enum Stat {
     PowerTurnover,
+    HumanProductionEfficiency,
     ResourceGather(Resource),
     ResourceConsumption(Resource),
     ResourceNet(Resource),
@@ -18,6 +19,7 @@ impl Display for Stat {
             Self::PowerTurnover => {
                 write!(f, "total power turnover")
             }
+            Self::HumanProductionEfficiency => write!(f, "human production efficiency"),
             Self::ResourceGather(resource) => {
                 write!(f, "amount obtained per gathering of '{resource}'")
             }

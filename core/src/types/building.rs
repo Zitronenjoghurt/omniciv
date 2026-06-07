@@ -3,14 +3,13 @@ use crate::engine::capabilities::individual_count::IndividualCount;
 use crate::engine::capabilities::modifying::Modifying;
 use crate::engine::capabilities::type_count::TypeCount;
 use crate::engine::capabilities::type_iter::TypeIter;
+use crate::engine::cost::Cost;
 use crate::engine::dsl::action::Action;
-use crate::engine::dsl::comp::CompOp;
 use crate::engine::dsl::condition::Condition;
-use crate::engine::dsl::constant::Constant;
 use crate::engine::dsl::modifier::Modifier;
 use crate::engine::dsl::value::Value;
 use crate::engine::event::Event;
-use crate::types::resource::Resource;
+use crate::modifiers;
 use crate::types::stat::Stat;
 use crate::types::technology::Technology;
 use serde::{Deserialize, Serialize};
@@ -53,8 +52,8 @@ impl AutoUnlockable for Building {
         Action::UnlockBuilding(*self)
     }
 
-    fn unlock_event(&self) -> Event {
-        Event::UnlockedBuilding(*self)
+    fn unlock_event(&self) -> Option<Event> {
+        Some(Event::UnlockedBuilding(*self))
     }
 
     fn on_unlock(&self) -> Option<Action> {
@@ -73,7 +72,8 @@ impl Modifying for Building {
 
     fn modifiers(&self) -> &'static [Modifier] {
         match self {
-            Self::Bonfire => todo!(),
+            // TODO: give the Bonfire a real effect
+            Self::Bonfire => modifiers!(),
         }
     }
 }
@@ -89,27 +89,10 @@ impl IndividualCount for Building {
 }
 
 impl Building {
-    pub fn build_cost(&self) -> &'static [(Resource, f64)] {
+    pub fn build_cost(&self) -> Cost<'_> {
         match self {
-            Self::Bonfire => &[],
+            Self::Bonfire => Cost::EMPTY,
         }
-    }
-}
-
-impl Building {
-    pub fn affordable(&self, count: u128) -> Condition {
-        Condition::All(
-            self.build_cost()
-                .iter()
-                .map(|&(resource, amount)| {
-                    Condition::Compare(
-                        Value::ResourceAmount(resource),
-                        CompOp::Gte,
-                        Value::Constant(Constant::Amount(amount * count as f64)),
-                    )
-                })
-                .collect(),
-        )
     }
 }
 

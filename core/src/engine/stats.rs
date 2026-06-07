@@ -53,6 +53,7 @@ impl Stats {
 
         acc.derive_net_resource();
         acc.derive_power_turnover();
+        acc.derive_human_efficiency(ctx.state());
 
         acc
     }
@@ -88,6 +89,25 @@ impl Stats {
             }
             self.set(&Stat::ResourceNet(resource), Modifiers::from_value(net));
         }
+    }
+
+    fn derive_human_efficiency(&mut self, state: &State) {
+        let efficiency = Resource::iter()
+            .filter_map(|resource| {
+                let consumption = self.get(Stat::ResourceConsumption(resource));
+                if consumption <= 0.0 {
+                    return None;
+                }
+                if state.resources.get(&resource) > 0.0 {
+                    return Some(1.0);
+                }
+                Some((self.get(Stat::ResourceProduction(resource)) / consumption).clamp(0.0, 1.0))
+            })
+            .fold(1.0, f64::min);
+        self.set(
+            &Stat::HumanProductionEfficiency,
+            Modifiers::from_value(efficiency),
+        );
     }
 
     fn derive_power_turnover(&mut self) {

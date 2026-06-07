@@ -1,25 +1,25 @@
 use crate::ui::widgets::form::FormWidget;
 use crate::ui::widgets::hint::show_unlock_hints;
 use egui::{ScrollArea, Ui};
-use omniciv_core::{BuildingView, Submit, UnlockHint};
+use omniciv_core::{HumanView, Submit, UnlockHint};
 
-pub struct BuildingViewsWidget<'a> {
-    views: &'a [BuildingView],
+pub struct HumanViewsWidget<'a> {
+    views: &'a [HumanView],
     locked: &'a [UnlockHint],
 }
 
-impl<'a> BuildingViewsWidget<'a> {
-    pub fn new(views: &'a [BuildingView], locked: &'a [UnlockHint]) -> Self {
+impl<'a> HumanViewsWidget<'a> {
+    pub fn new(views: &'a [HumanView], locked: &'a [UnlockHint]) -> Self {
         Self { views, locked }
     }
 
     pub fn show(self, ui: &mut Ui) -> Vec<Submit> {
-        ui.heading("Buildings");
+        ui.heading("Roles");
         let mut submits = Vec::new();
-        ScrollArea::vertical().id_salt("buildings").show(ui, |ui| {
+        ScrollArea::vertical().id_salt("humans").show(ui, |ui| {
             for view in self.views {
                 ui.separator();
-                submits.extend(BuildingViewWidget::new(view).show(ui));
+                submits.extend(HumanViewWidget::new(view).show(ui));
             }
             show_unlock_hints(ui, self.locked);
         });
@@ -27,12 +27,12 @@ impl<'a> BuildingViewsWidget<'a> {
     }
 }
 
-pub struct BuildingViewWidget<'a> {
-    view: &'a BuildingView,
+pub struct HumanViewWidget<'a> {
+    view: &'a HumanView,
 }
 
-impl<'a> BuildingViewWidget<'a> {
-    pub fn new(view: &'a BuildingView) -> Self {
+impl<'a> HumanViewWidget<'a> {
+    pub fn new(view: &'a HumanView) -> Self {
         Self { view }
     }
 

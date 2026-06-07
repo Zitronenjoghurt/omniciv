@@ -1,3 +1,4 @@
+use crate::config;
 use crate::math::quantity::Energy;
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
@@ -12,7 +13,7 @@ pub enum Resource {
 impl Resource {
     pub fn consumption_energy(&self) -> Option<Energy> {
         match self {
-            Self::Berries => Some(Energy::from_kilocalories(1.0)),
+            Self::Berries => Some(config::resource::BERRY_FOOD_ENERGY),
             Self::Ideas => None,
         }
     }

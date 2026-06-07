@@ -33,10 +33,21 @@ impl<'a> ResourceViewWidget<'a> {
     }
 
     pub fn show(self, ui: &mut Ui) -> Vec<Submit> {
-        ui.label(format!("{}: {:.0}", self.view.kind, self.view.amount));
+        let view = self.view;
+        ui.label(format!("{}: {:.2}", view.kind, view.amount));
+        if view.production != 0.0 || view.consumption != 0.0 {
+            ui.label(
+                egui::RichText::new(format!(
+                    "prod {:.3} - use {:.3} = net {:+.3}/s",
+                    view.production, view.consumption, view.net
+                ))
+                .weak()
+                .small(),
+            );
+        }
         let mut submits = Vec::new();
-        for form in &self.view.forms {
-            if let Some(submit) = FormWidget::new(form).submit_button().show(ui) {
+        for form in &view.forms {
+            if let Some(submit) = FormWidget::new(form).show(ui) {
                 submits.push(submit);
             }
         }

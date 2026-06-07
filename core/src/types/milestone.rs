@@ -8,7 +8,7 @@ use crate::engine::dsl::modifier::Modifier;
 use crate::engine::dsl::value::Value;
 use crate::engine::event::Event;
 use crate::types::stat::Stat;
-use crate::{modifiers, Resource};
+use crate::{config, modifiers, Resource};
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 use strum::{EnumCount, EnumIter, IntoEnumIterator};
@@ -49,8 +49,8 @@ impl AutoUnlockable for Milestone {
         Action::UnlockMilestone(*self)
     }
 
-    fn unlock_event(&self) -> Event {
-        Event::UnlockedMilestone(*self)
+    fn unlock_event(&self) -> Option<Event> {
+        Some(Event::UnlockedMilestone(*self))
     }
 
     fn on_unlock(&self) -> Option<Action> {
@@ -72,7 +72,7 @@ impl Modifying for Milestone {
     fn modifiers(&self) -> &'static [Modifier] {
         match self {
             Self::BerryGathering => modifiers![
-                Stat::ResourceGather(Resource::Berries) => +Value::amount(1.0);
+                Stat::ResourceGather(Resource::Berries) => +Value::amount(config::gather::BERRIES_PER_GATHER);
             ],
         }
     }

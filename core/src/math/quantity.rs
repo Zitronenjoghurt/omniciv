@@ -30,6 +30,7 @@ macro_rules! quantity {
         }
 
         #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+        #[allow(clippy::enum_variant_names)]
         pub enum $unit { $($variant),* }
 
         impl $unit {
@@ -133,5 +134,25 @@ quantity!(Time, TimeUnit, base = "s", {
     Hour   => (3_600.0,  "h",   hours),
     Day    => (86_400.0, "d",   days),
 });
+
+quantity!(Rate, RateUnit, base = "/s", {
+    PerSecond => (1.0,            "/s",   per_second),
+    PerMinute => (1.0 / 60.0,     "/min", per_minute),
+    PerHour   => (1.0 / 3_600.0,  "/h",   per_hour),
+    PerDay    => (1.0 / 86_400.0, "/d",   per_day),
+});
+
+impl Rate {
+    pub const fn per(amount: f64, time: Time) -> Self {
+        Self(amount / time.0)
+    }
+}
+
+impl std::ops::Mul<Time> for Rate {
+    type Output = f64;
+    fn mul(self, time: Time) -> f64 {
+        self.0 * time.0
+    }
+}
 
 quant_mul_div!(Power * Time => Energy);
