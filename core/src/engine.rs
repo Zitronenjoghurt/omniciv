@@ -6,6 +6,7 @@ use crate::engine::dsl::{Mutate, Query};
 use crate::engine::error::{EngineError, EngineResult};
 use crate::state::State;
 use crate::types::building::Building;
+use crate::types::stat::Stat;
 use crate::Resource;
 
 pub mod capabilities;
@@ -58,7 +59,9 @@ impl Engine {
     }
 
     fn handle_gather(&self, state: &mut State, resource: Resource) -> EngineResult<()> {
-        let amount = state.eval(Value::ResourceGatherAmount(resource)).as_f64();
+        let amount = state
+            .eval(Value::Stat(Stat::ResourceGather(resource)))
+            .as_f64();
         if amount > 0.0 {
             state.apply(Action::GainResource(resource, amount));
         };

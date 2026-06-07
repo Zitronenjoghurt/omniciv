@@ -44,9 +44,7 @@ impl AutoUnlockable for Human {
     fn can_unlock(&self) -> Condition {
         match self {
             Self::Gatherer => Condition::Always,
-            Self::Thinker => {
-                Value::Stat(Stat::ResourceProduction(Resource::Berries)).at_least(20.0)
-            }
+            Self::Thinker => Value::Stat(Stat::ResourceNet(Resource::Berries)).at_least(0.05),
         }
     }
 
@@ -75,12 +73,12 @@ impl Modifying for Human {
     fn modifiers(&self) -> &'static [Modifier] {
         match self {
             Self::Gatherer => modifiers!(
-                Stat::ResourceProduction(Resource::Berries) => +Value::amount(2.5);
-                Stat::ResourceConsumption(Resource::Berries) => +Value::amount(2.0)
+                Stat::ResourceProduction(Resource::Berries) => +Value::amount(0.035);
+                Stat::ResourceConsumption(Resource::Berries) => +Value::amount(0.03);
             ),
             Self::Thinker => modifiers!(
-                Stat::ResourceProduction(Resource::Ideas) => +Value::amount(0.01);
-                Stat::ResourceConsumption(Resource::Berries) => +Value::amount(2.0)
+                Stat::ResourceProduction(Resource::Ideas) => +Value::amount(0.00003);
+                Stat::ResourceConsumption(Resource::Berries) => +Value::amount(0.03);
             ),
         }
     }

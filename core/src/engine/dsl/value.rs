@@ -16,7 +16,6 @@ pub enum Value {
     HumansUnlocked,
     MilestonesUnlocked,
     ResourceAmount(Resource),
-    ResourceGatherAmount(Resource),
     Stat(Stat),
     TechnologiesResearched,
     TechnologiesUnlocked,
@@ -32,9 +31,6 @@ impl Value {
             Self::HumansUnlocked => Constant::Count(state.human_unlocks.count_set() as u128),
             Self::MilestonesUnlocked => Constant::Count(state.milestones.count_set() as u128),
             Self::ResourceAmount(resource) => Constant::Amount(state.resources.get(resource)),
-            Self::ResourceGatherAmount(resource) => {
-                Constant::Amount(state.stats.get(Stat::ResourceGather(*resource)))
-            }
             Self::Stat(stat) => state.stats.get(*stat).into(),
             Self::TechnologiesResearched => Constant::Count(state.technologies.count_set() as u128),
             Self::TechnologiesUnlocked => {
@@ -104,9 +100,6 @@ impl Display for Value {
             Self::HumansUnlocked => write!(f, "number of humans unlocked"),
             Self::MilestonesUnlocked => write!(f, "number of milestones unlocked"),
             Self::ResourceAmount(resource) => write!(f, "amount of resource '{resource}'"),
-            Self::ResourceGatherAmount(resource) => {
-                write!(f, "gatherable amount of resource '{resource}'")
-            }
             Self::Stat(stat) => write!(f, "'{stat}'"),
             Self::TechnologiesResearched => write!(f, "number of technologies researched"),
             Self::TechnologiesUnlocked => write!(f, "number of technologies unlocked"),

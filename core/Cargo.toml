@@ -5,6 +5,7 @@ version = "0.1.0"
 edition.workspace = true
 
 [dependencies]
+pastey = { version = "0.2.3" }
 serde = { workspace = true }
 strum = { workspace = true }
 thiserror = { workspace = true }
